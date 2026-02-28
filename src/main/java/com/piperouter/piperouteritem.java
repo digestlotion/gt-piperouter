@@ -222,7 +222,8 @@ public class piperouteritem extends Item {
 
         if (!nbt.contains("Start")) {
             nbt.put("Start", NbtUtils.writeBlockPos(getTargetPos(player, level, true)));
-            Direction startDir = player.isShiftKeyDown() ? null : getDir(getTargetPos(player, level, true), getTargetPos(player, level, false));
+            Direction startDir = player.isShiftKeyDown() ? null :
+                    getDir(getTargetPos(player, level, true), getTargetPos(player, level, false));
             if (startDir != null) nbt.putInt("StartDir", startDir.get3DDataValue());
             nbt.putString("Selected", ForgeRegistries.BLOCKS.getKey(pipeblock).toString());
             return InteractionResultHolder.success(stack);

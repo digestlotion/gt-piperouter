@@ -25,13 +25,12 @@ public class piperouter {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         ITEMS.register(modEventBus);
         modEventBus.addListener(this::addCreative);
-
     }
+
     @SubscribeEvent
     public void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(PIPE_ROUTER);
         }
     }
-
 }
