@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package com.piperouter;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -20,7 +20,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import java.util.List;
 
-@Mod.EventBusSubscriber(modid = pointrouter.MOD_ID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = piperouter.MOD_ID, value = Dist.CLIENT)
 public class render {
 
     @SubscribeEvent
@@ -32,7 +32,7 @@ public class render {
         if (player == null) return;
 
         ItemStack stack = player.getMainHandItem();
-        if (!(stack.getItem() instanceof pointrouteritem)) return;
+        if (!(stack.getItem() instanceof piperouteritem)) return;
         PoseStack poseStack = event.getPoseStack();
         Vec3 cam = event.getCamera().getPosition();
         VertexConsumer consumer = mc.renderBuffers().bufferSource().getBuffer(RenderType.lines());
@@ -44,12 +44,12 @@ public class render {
         boolean hasStart = nbt != null && nbt.contains("Start");
 
         if (!hasStart) {
-            BlockPos hover = pointrouteritem.getTargetPos(player, player.level());
+            BlockPos hover = piperouteritem.getTargetPos(player, player.level(), true);
             LevelRenderer.renderLineBox(poseStack, consumer, new AABB(hover).inflate(-0.002), 1.0f, 1.0f, 0.0f, 0.8f);
         } else {
             BlockPos start = NbtUtils.readBlockPos(nbt.getCompound("Start"));
-            BlockPos end = pointrouteritem.getTargetPos(player, player.level());
-            List<BlockPos> path = pointrouteritem.findPath(start, end, player);
+            BlockPos end = piperouteritem.getTargetPos(player, player.level(), true);
+            List<BlockPos> path = piperouteritem.findPath(start, end, player);
 
             for (BlockPos pos : path) {
                 float r = pos.equals(start) ? 1.0f : 0.0f;
