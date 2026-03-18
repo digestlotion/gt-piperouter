@@ -1,7 +1,13 @@
 package com.piperouter;
 
 import com.gregtechceu.gtceu.api.block.PipeBlock;
+import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
+import com.gregtechceu.gtceu.api.machine.IMachineBlockEntity;
+import com.gregtechceu.gtceu.api.machine.feature.IEnvironmentalHazardCleaner;
+import com.gregtechceu.gtceu.api.machine.feature.IEnvironmentalHazardEmitter;
 import com.gregtechceu.gtceu.api.pipenet.IPipeNode;
+import com.gregtechceu.gtceu.common.blockentity.*;
+import com.gregtechceu.gtceu.utils.GTTransferUtils;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -140,6 +146,38 @@ public class piperouteritem extends Item {
         return path;
     }
 
+    private void connectToHandler(Level level, BlockPos pos, IPipeNode node) {
+        for (Direction d : Direction.values()) {
+            if (!(level.getBlockEntity(pos.relative(d)) instanceof IPipeNode<?, ?>)) {
+                // TODO: setBlock only for input machines
+                if (node instanceof ItemPipeBlockEntity && GTTransferUtils.hasAdjacentItemHandler(level, pos, d) &&
+                        !GTTransferUtils.hasAdjacentFluidHandler(level, pos, d)) {
+                    node.setConnection(d, true, false);
+                    node.setBlocked(d, true);
+                }
+                if (node instanceof FluidPipeBlockEntity && GTTransferUtils.hasAdjacentFluidHandler(level, pos, d)) {
+                    node.setConnection(d, true, false);
+                    node.setBlocked(d, true);
+                }
+                if (node instanceof CableBlockEntity &&
+                        GTCapabilityHelper.getEnergyContainer(level, pos.relative(d), d.getOpposite()) != null) {
+                    node.setConnection(d, true, false);
+                }
+                if (node instanceof LaserPipeBlockEntity &&
+                        GTCapabilityHelper.getLaser(level, pos.relative(d), d.getOpposite()) != null) {
+                    node.setConnection(d, true, false);
+                }
+                if (node instanceof DuctPipeBlockEntity &&
+                        GTCapabilityHelper.getHazardContainer(level, pos.relative(d), d.getOpposite()) != null ||
+                        (level.getBlockEntity(pos.relative(d)) instanceof IMachineBlockEntity machineBlockEntity &&
+                                (machineBlockEntity.getMetaMachine() instanceof IEnvironmentalHazardCleaner ||
+                                        machineBlockEntity.getMetaMachine() instanceof IEnvironmentalHazardEmitter))) {
+                    node.setConnection(d, true, false);
+                }
+            }
+        }
+    }
+
     private boolean placePath(Level level, ServerPlayer player, BlockPos start, BlockPos end, CompoundTag nbt,
                               ItemStack offhandStack, Direction startDir, Direction endDir) {
         String selectedId = nbt.getString("Selected");
@@ -186,6 +224,8 @@ public class piperouteritem extends Item {
                                 prevnode.setBlocked(d, false);
                             }
                         }
+                        connectToHandler(level, prev, prevnode);
+
                     }
                     if (i == path.size() - 1 && endDir != null) {
                         currnode.setConnection(endDir, true, false);
@@ -197,8 +237,14 @@ public class piperouteritem extends Item {
                             }
                         }
                     }
+                    connectToHandler(level, curr, currnode);
+
                     prevnode.notifyBlockUpdate();
                     currnode.notifyBlockUpdate();
+                    prevnode.scheduleRenderUpdate();
+                    currnode.scheduleRenderUpdate();
+                    prevnode.scheduleNeighborShapeUpdate();
+                    currnode.scheduleNeighborShapeUpdate();
                     prevdir = dir;
                 }
             }
